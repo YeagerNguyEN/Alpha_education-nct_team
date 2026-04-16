@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha education - nct team | Thi Trắc Nghiệm GDPT 2018</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f3f4f6;
+            --sheet-bg: #fce8e8;
+            --text-dark: #1f2937;
+            --border-color: #374151;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Vùng hiển thị các màn hình */
+        .screen { display: none; width: 100%; max-width: 1000px; padding: 20px; }
+        .screen.active { display: block; animation: fadeIn 0.4s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Typography & Buttons */
+        h1, h2 { text-align: center; margin-bottom: 20px; }
+        .brand-title { color: var(--primary); font-size: 2rem; font-weight: bold; margin-bottom: 1rem; }
+        
+        .btn {
+            background-color: var(--primary); color: white;
+            border: none; padding: 12px 24px; border-radius: 8px;
+            font-size: 1.1rem; cursor: pointer; transition: background 0.3s;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn-danger { background-color: #dc2626; }
+        .btn-danger:hover { background-color: #b91c1c; }
+        .btn-success { background-color: #16a34a; }
+        .btn-success:hover { background-color: #15803d; }
+
+        /* Màn hình bắt đầu */
+        #start-screen { text-align: center; margin-top: 20vh; }
+        
+        /* Header làm bài */
+        .test-header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: white; padding: 15px 20px; border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px;
+            position: sticky; top: 10px; z-index: 100;
+        }
+        .timer { font-size: 1.5rem; font-weight: bold; color: #dc2626; font-family: monospace;}
+
+        /* Thiết kế tờ giấy thi (Answer Sheet) */
+        .answer-sheet {
+            background-color: var(--sheet-bg);
+            padding: 30px; border-radius: 4px; position: relative;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            border: 1px solid #ccc;
+        }
+        .marker { position: absolute; width: 15px; height: 15px; background: #000; }
+        .marker.tl { top: 15px; left: 15px; }
+        .marker.tr { top: 15px; right: 15px; }
+        .marker.bl { bottom: 15px; left: 15px; }
+        .marker.br { bottom: 15px; right: 15px; }
+
+        .section-title {
+            font-size: 1.1rem; font-weight: bold; border-bottom: 2px solid var(--border-color);
+            margin: 25px 0 15px 0; padding-bottom: 5px; text-align: left; text-transform: uppercase;
+        }
+
+        /* Bubble (Ô tô màu) */
+        .bubble {
+            appearance: none; -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border: 1px solid var(--border-color); border-radius: 50%;
+            cursor: pointer; display: inline-block; vertical-align: middle;
+            background-color: white; margin: 0 3px; outline: none;
+            transition: all 0.1s;
+        }
+        .bubble:checked {
+            background-color: #111; box-shadow: inset 0 0 0 2px var(--sheet-bg);
+            border-color: #111;
+        }
+
+        /* Lưới Phần I (12 câu, 2 cột) */
+        .p1-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .p1-block { border: 1px solid var(--border-color); padding: 10px; background: rgba(255,255,255,0.4); }
+        .p1-header, .p1-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;}
+        .p1-header span { width: 24px; text-align: center; font-size: 0.85rem; font-weight: bold; }
+        .p1-row span { width: 24px; text-align: right; font-size: 0.9rem; font-weight: bold; padding-right: 5px; }
+
+        /* Lưới Phần II (4 câu) */
+        .p2-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .p2-block { border: 1px solid var(--border-color); padding: 10px; background: rgba(255,255,255,0.4); }
+        .p2-title { text-align: center; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 3px;}
+        .p2-header { display: flex; justify-content: flex-end; font-size: 0.8rem; margin-bottom: 5px; }
+        .p2-header span { width: 40px; text-align: center; }
+        .p2-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .p2-row span { font-weight: bold; }
+        .p2-options { display: flex; width: 80px; justify-content: space-around; }
+
+        /* Lưới Phần III (6 câu) */
+        .p3-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+        .p3-block { border: 1px solid var(--border-color); background: rgba(255,255,255,0.4); padding-bottom: 5px; }
+        .p3-title { font-weight: bold; text-align: center; border-bottom: 1px solid #ccc; padding: 5px 0;}
+        .p3-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem;}
+        .p3-table td { padding: 3px 1px; }
+        .p3-table td:first-child { font-weight: bold; width: 20px; }
+
+        /* Màn hình kết quả */
+        .result-box {
+            background: white; padding: 30px; border-radius: 12px;
+            text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 10vh;
+        }
+        .score-display { font-size: 4rem; font-weight: bold; color: var(--primary); margin: 20px 0; }
+        .result-details { font-size: 1.1rem; margin-bottom: 30px; color: #555; }
+        
+        /* Mobile Optimization */
+        @media (max-width: 600px) {
+            .p1-grid { grid-template-columns: 1fr 1fr; }
+            .p2-grid { grid-template-columns: 1fr 1fr; }
+            .p3-grid { grid-template-columns: 1fr 1fr 1fr; }
+            .answer-sheet { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="screen active">
+        <h1 class="brand-title">Alpha education - nct team</h1>
+        <p style="margin-bottom: 30px; font-size: 1.1rem; color: #555;">Hệ thống thi trắc nghiệm trực tuyến chuẩn GDPT 2018</p>
+        <button class="btn" onclick="startTest()">Bắt đầu làm bài</button>
+    </div>
+
+    <div id="test-screen" class="screen">
+        <div class="test-header">
+            <div class="brand-title" style="font-size: 1.2rem; margin: 0;">Alpha education</div>
+            <div class="timer" id="timer">00:00</div>
+            <button class="btn btn-danger" onclick="submitTest()">Nộp bài</button>
+        </div>
+
+        <div class="answer-sheet" id="answer-sheet">
+            <div class="marker tl"></div><div class="marker tr"></div>
+            <div class="marker bl"></div><div class="marker br"></div>
+
+            <div class="section-title">PHẦN I (12 Câu)</div>
+            <div class="p1-grid" id="part1-container"></div>
+
+            <div class="section-title">PHẦN II (4 Câu)</div>
+            <div class="p2-grid" id="part2-container"></div>
+
+            <div class="section-title">PHẦN III (6 Câu)</div>
+            <div class="p3-grid" id="part3-container"></div>
+        </div>
+    </div>
+
+    <div id="result-screen" class="screen">
+        <div class="result-box" id="capture-area">
+            <h2 class="brand-title">Alpha education - nct team</h2>
+            <h3>KẾT QUẢ BÀI THI</h3>
+            <div class="score-display"><span id="final-score">0.00</span> / 10</div>
+            <div class="result-details">
+                <p>Thời gian làm bài: <strong id="time-taken">00:00</strong></p>
+                <p style="font-size: 0.9rem; margin-top: 10px;">
+                    (Chi tiết: P1: <span id="r-p1"></span>đ | P2: <span id="r-p2"></span>đ | P3: <span id="r-p3"></span>đ)
+                </p>
+            </div>
+            <button class="btn btn-success" onclick="captureResult()">📸 Chụp hình kết quả</button>
+            <button class="btn" style="margin-left: 10px;" onclick="resetTest()">Làm lại từ đầu</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CẤU HÌNH ĐỀ THI GDPT 2018 (THAY ĐỔI TẠI ĐÂY)
+        // ==========================================
+        const CONFIG = {
+            testDuration: 45, // Thời gian làm bài (Phút)
+            correctAnswers: {
+                // Phần 1: 12 câu (Mỗi câu 0.25 điểm)
+                part1: ["A","B","C","D","A","B","C","D","A","B","C","D"],
+                
+                // Phần 2: 4 câu (Tổ hợp ý a, b, c, d chọn T (Đúng) hoặc F (Sai))
+                part2: [
+                    {a: "T", b: "F", c: "T", d: "F"}, 
+                    {a: "F", b: "F", c: "T", d: "T"},
+                    {a: "T", b: "T", c: "T", d: "F"}, 
+                    {a: "F", b: "T", c: "F", d: "T"}
+                ],
+
+                // Phần 3: 6 câu điền số (Mỗi câu 0.5 điểm)
+                part3: ["-1.5", "2024", "0.25", "-42", "7", "3.14"]
+            }
+        };
+
+        // ==========================================
+        // KHỞI TẠO GIAO DIỆN (RENDER DOM)
+        // ==========================================
+        function renderSheet() {
+            // Render Phần 1 (2 khối, mỗi khối 6 câu -> tổng 12 câu)
+            let p1Html = '';
+            for(let block=0; block<2; block++) {
+                p1Html += `<div class="p1-block">
+                    <div class="p1-header"><span></span><span>A</span><span>B</span><span>C</span><span>D</span></div>`;
+                for(let i=1; i<=6; i++) {
+                    let q = block * 6 + i;
+                    p1Html += `<div class="p1-row"><span>${q}</span>`;
+                    ['A','B','C','D'].forEach(ans => {
+                        p1Html += `<input type="radio" name="p1_q${q}" value="${ans}" class="bubble" title="${ans}">`;
+                    });
+                    p1Html += `</div>`;
+                }
+                p1Html += `</div>`;
+            }
+            document.getElementById('part1-container').innerHTML = p1Html;
+
+            // Render Phần 2 (4 câu)
+            let p2Html = '';
+            for(let i=1; i<=4; i++) {
+                p2Html += `<div class="p2-block"><div class="p2-title">Câu ${i}</div>
+                    <div class="p2-header"><span>Đúng</span><span>Sai</span></div>`;
+                ['a','b','c','d'].forEach(sub => {
+                    p2Html += `<div class="p2-row"><span>${sub})</span><div class="p2-options">
+                        <input type="radio" name="p2_q${i}_${sub}" value="T" class="bubble">
+                        <input type="radio" name="p2_q${i}_${sub}" value="F" class="bubble">
+                    </div></div>`;
+                });
+                p2Html += `</div>`;
+            }
+            document.getElementById('part2-container').innerHTML = p2Html;
+
+            // Render Phần 3 (6 câu)
+            let p3Html = '';
+            for(let i=1; i<=6; i++) {
+                p3Html += `<div class="p3-block"><div class="p3-title">Câu ${i}</div><table class="p3-table">`;
+                p3Html += `<tr><td>-</td><td><input type="checkbox" name="p3_q${i}_neg" value="-" class="bubble"></td><td colspan="3"></td></tr>`;
+                p3Html += `<tr><td>,</td>`;
+                for(let c=1; c<=4; c++) p3Html += `<td><input type="radio" name="p3_q${i}_c${c}" value="." class="bubble"></td>`;
+                p3Html += `</tr>`;
+                for(let n=0; n<=9; n++) {
+                    p3Html += `<tr><td>${n}</td>`;
+                    for(let c=1; c<=4; c++) p3Html += `<td><input type="radio" name="p3_q${i}_c${c}" value="${n}" class="bubble"></td>`;
+                    p3Html += `</tr>`;
+                }
+                p3Html += `</table></div>`;
+            }
+            document.getElementById('part3-container').innerHTML = p3Html;
+
+            // Lắng nghe sự kiện để lưu trạng thái và cho phép bỏ chọn radio
+            document.getElementById('answer-sheet').addEventListener('click', handleRadioClick);
+            document.getElementById('answer-sheet').addEventListener('change', saveState);
+        }
+
+        // Trick để Radio Button có thể click lại để bỏ chọn (Deslect) giống tẩy chì
+        function handleRadioClick(e) {
+            if(e.target.type === 'radio') {
+                if(e.target.dataset.wasChecked === 'true') {
+                    e.target.checked = false;
+                    e.target.dataset.wasChecked = 'false';
+                    saveState();
+                } else {
+                    document.querySelectorAll(`input[name="${e.target.name}"]`).forEach(el => el.dataset.wasChecked = 'false');
+                    e.target.dataset.wasChecked = 'true';
+                }
+            }
+        }
+
+        // ==========================================
+        // LOGIC LƯU TRỮ VÀ THỜI GIAN
+        // ==========================================
+        let timerInterval;
+
+        function saveState() {
+            const state = { inputs: {} };
+            document.querySelectorAll('#answer-sheet input').forEach(input => {
+                if(input.checked) state.inputs[input.name] = input.value;
+            });
+            localStorage.setItem('alpha_test_answers_gdpt', JSON.stringify(state));
+        }
+
+        function restoreState() {
+            const saved = JSON.parse(localStorage.getItem('alpha_test_answers_gdpt'));
+            if(saved && saved.inputs) {
+                for (let key in saved.inputs) {
+                    let el = document.querySelector(`input[name="${key}"][value="${saved.inputs[key]}"]`);
+                    if(el) {
+                        el.checked = true;
+                        if(el.type === 'radio') el.dataset.wasChecked = 'true';
+                    }
+                }
+            }
+        }
+
+        function startTest() {
+            document.getElementById('start-screen').classList.remove('active');
+            document.getElementById('test-screen').classList.add('active');
+
+            let endTime = localStorage.getItem('alpha_test_endtime_gdpt');
+            if(!endTime) {
+                endTime = Date.now() + CONFIG.testDuration * 60000;
+                localStorage.setItem('alpha_test_endtime_gdpt', endTime);
+                localStorage.setItem('alpha_test_starttime_gdpt', Date.now());
+            }
+            
+            restoreState();
+            timerInterval = setInterval(() => updateTimer(endTime), 1000);
+            updateTimer(endTime);
+        }
+
+        function updateTimer(endTime) {
+            let remain = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+            let m = String(Math.floor(remain / 60)).padStart(2, '0');
+            let s = String(remain % 60).padStart(2, '0');
+            document.getElementById('timer').innerText = `${m}:${s}`;
+            if(remain <= 0) submitTest();
+        }
+
+        // ==========================================
+        // LOGIC CHẤM ĐIỂM GDPT 2018 (HỆ 10)
+        // ==========================================
+        function submitTest() {
+            clearInterval(timerInterval);
+            
+            let start = parseInt(localStorage.getItem('alpha_test_starttime_gdpt'));
+            let timeTaken = start ? Math.floor((Date.now() - start) / 1000) : 0;
+            let tm = String(Math.floor(timeTaken / 60)).padStart(2, '0');
+            let ts = String(timeTaken % 60).padStart(2, '0');
+
+            const state = JSON.parse(localStorage.getItem('alpha_test_answers_gdpt') || '{"inputs":{}}').inputs;
+            let p1Score = 0, p2Score = 0, p3Score = 0;
+
+            // Chấm Phần 1 (12 câu * 0.25 = Tối đa 3 điểm)
+            for(let i=1; i<=12; i++) {
+                if(state[`p1_q${i}`] === CONFIG.correctAnswers.part1[i-1]) p1Score += 0.25;
+            }
+
+            // Chấm Phần 2 (4 câu * tổ hợp ý = Tối đa 4 điểm)
+            for(let i=1; i<=4; i++) {
+                let match = 0;
+                ['a','b','c','d'].forEach(sub => {
+                    if(state[`p2_q${i}_${sub}`] === CONFIG.correctAnswers.part2[i-1][sub]) match++;
+                });
+                if(match === 1) p2Score += 0.1;
+                else if(match === 2) p2Score += 0.25;
+                else if(match === 3) p2Score += 0.5;
+                else if(match === 4) p2Score += 1.0;
+            }
+
+            // Chấm Phần 3 (6 câu * 0.5 = Tối đa 3 điểm)
+            for(let i=1; i<=6; i++) {
+                let userStr = state[`p3_q${i}_neg`] || ''; 
+                for(let c=1; c<=4; c++) {
+                    if(state[`p3_q${i}_c${c}`]) userStr += state[`p3_q${i}_c${c}`];
+                }
+                
+                let userVal = parseFloat(userStr);
+                let correctVal = parseFloat(CONFIG.correctAnswers.part3[i-1]);
+                if(!isNaN(userVal) && userVal === correctVal) p3Score += 0.5;
+            }
+
+            // Tổng điểm (Tối đa 10)
+            let finalScore = p1Score + p2Score + p3Score;
+            
+            // Hiển thị kết quả
+            document.getElementById('r-p1').innerText = p1Score.toFixed(2);
+            document.getElementById('r-p2').innerText = p2Score.toFixed(2);
+            document.getElementById('r-p3').innerText = p3Score.toFixed(2);
+            document.getElementById('final-score').innerText = finalScore.toFixed(2);
+            document.getElementById('time-taken').innerText = `${tm} phút ${ts} giây`;
+
+            document.getElementById('test-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.add('active');
+
+            // Xóa cache test
+            localStorage.removeItem('alpha_test_answers_gdpt');
+            localStorage.removeItem('alpha_test_endtime_gdpt');
+            localStorage.removeItem('alpha_test_starttime_gdpt');
+        }
+
+        // Chụp ảnh kết quả tải về
+        function captureResult() {
+            html2canvas(document.getElementById('capture-area'), {scale: 2}).then(canvas => {
+                let link = document.createElement('a');
+                link.download = 'Alpha-Edu-Result.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        function resetTest() {
+            location.reload();
+        }
+
+        // Init
+        renderSheet();
+
+        if(localStorage.getItem('alpha_test_endtime_gdpt')) {
+            startTest();
+        }
+    </script>
+</body>
+</html>
